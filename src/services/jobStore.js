@@ -47,6 +47,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
       if (status === 'submitted') {
         job.submittedAt = job.updatedAt;
         job.lastError = null;
+        delete job.html; // free RAM: submitted jobs are never retried
       } else {
         job.lastError = String(error || 'Unknown error').slice(0, 500);
       }
@@ -69,6 +70,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
         job.submittedAt = new Date().toISOString();
         job.updatedAt = job.submittedAt;
         job.lastError = null;
+        delete job.html; // free RAM: submitted jobs are never retried
       } else if (status === 'failed') {
         job.status = 'failed';
         job.lastError = String(error || 'Unknown error').slice(0, 500);
