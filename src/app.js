@@ -8,7 +8,7 @@ function createApp() {
   const app = express();
   app.use(helmet());
   app.use(cors({ origin: config.corsOrigin }));
-  app.use(express.json({ limit: '64kb' }));
+  app.use(express.json({ limit: '1mb' }));
 
   app.use(require('./routes/health'));
   app.use(require('./routes/printers'));

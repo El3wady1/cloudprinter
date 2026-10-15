@@ -13,7 +13,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
   }
 
   return {
-    create({ printerName, title, lines, paper, copies, kind = 'receipt', sticker }) {
+    create({ printerName, title, lines, paper, copies, kind = 'receipt', sticker, html, page }) {
       const now = new Date().toISOString();
       const job = {
         _id: crypto.randomUUID(),
@@ -29,6 +29,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
         updatedAt: now,
       };
       if (sticker) job.sticker = sticker;
+      if (kind === 'html') { job.html = html; job.page = page; }
       push(job);
       return job;
     },

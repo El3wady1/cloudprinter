@@ -14,25 +14,47 @@ function validateSticker(s) {
   return { value: { widthMm, heightMm, fontSize, padding } };
 }
 
+function validatePage(p) {
+  if (typeof p !== 'object' || p === null) return { error: 'Invalid page fields' };
+  const { widthMm = 101.6, heightMm = 152.4 } = p;
+  if (!numIn(widthMm, 10, 220) || !numIn(heightMm, 10, 220)) return { error: 'Invalid page fields' };
+  return { value: { widthMm, heightMm } };
+}
+
 function validatePrintJob(body = {}) {
-  const { printerName, title, lines, paper = 'A4', copies = 1, kind = 'receipt', sticker } = body;
+  const { printerName, title, lines, paper = 'A4', copies = 1, kind = 'receipt', sticker, html, page } = body;
   const bad =
     typeof printerName !== 'string' || !printerName.trim() || printerName.length > 180 ||
     typeof title !== 'string' || !title.trim() || title.length > 160 ||
-    !Array.isArray(lines) || lines.length === 0 || lines.length > 60 ||
-    lines.some((x) => typeof x !== 'string' || x.length > 240) ||
     !PAPERS.includes(paper) ||
     !Number.isInteger(copies) || copies < 1 || copies > 5 ||
-    !['receipt', 'sticker'].includes(kind);
+    !['receipt', 'sticker', 'html'].includes(kind);
   if (bad) return { error: 'Invalid job fields' };
+  // lines required for receipt/sticker, optional for html (agent renders job.html as-is)
+  let finalLines = lines;
+  if (kind === 'html') {
+    if (finalLines === undefined) finalLines = [title.trim()];
+    if (typeof html !== 'string' || html.length < 50 || html.length > 400000) return { error: 'Invalid html fields' };
+  }
+  if (!Array.isArray(finalLines) || finalLines.length === 0 || finalLines.length > 60 ||
+      finalLines.some((x) => typeof x !== 'string' || x.length > 240)) {
+    return { error: 'Invalid job fields' };
+  }
   let stickerValue;
   if (kind === 'sticker') {
     const r = validateSticker(sticker);
     if (r.error) return r;
     stickerValue = r.value;
   }
-  const value = { printerName: printerName.trim(), title: title.trim(), lines, paper, copies, kind };
+  let pageValue;
+  if (kind === 'html') {
+    const r = validatePage(page === undefined ? {} : page);
+    if (r.error) return r;
+    pageValue = r.value;
+  }
+  const value = { printerName: printerName.trim(), title: title.trim(), lines: finalLines, paper, copies, kind };
   if (stickerValue) value.sticker = stickerValue;
+  if (kind === 'html') { value.html = html; value.page = pageValue; }
   return { value };
 }
 
