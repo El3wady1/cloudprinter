@@ -12,7 +12,7 @@ function agentRoom() {
 }
 
 function initSocket(server) {
-  const io = new Server(server, { cors: { origin: config.corsOrigin } });
+  const io = new Server(server, { cors: { origin: config.corsOrigin }, maxHttpBufferSize: 1e7 });
   io.use(socketAuth);
   io.on('connection', (socket) => {
     socket.join(agentRoom());

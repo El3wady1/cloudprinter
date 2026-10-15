@@ -34,7 +34,7 @@ function validatePrintJob(body = {}) {
   let finalLines = lines;
   if (kind === 'html') {
     if (finalLines === undefined) finalLines = [title.trim()];
-    if (typeof html !== 'string' || html.length < 50 || html.length > 400000) return { error: 'Invalid html fields' };
+    if (typeof html !== 'string' || html.length < 50 || html.length > 2500000) return { error: 'Invalid html fields' };
   }
   if (!Array.isArray(finalLines) || finalLines.length === 0 || finalLines.length > 60 ||
       finalLines.some((x) => typeof x !== 'string' || x.length > 240)) {
