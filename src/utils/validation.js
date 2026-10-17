@@ -7,11 +7,11 @@ function numIn(v, min, max) {
 
 function validateSticker(s) {
   if (typeof s !== 'object' || s === null) return { error: 'Invalid sticker fields' };
-  const { widthMm = 45, heightMm = 35, fontSize = 12, padding = 14 } = s;
-  if (!numIn(widthMm, 10, 210) || !numIn(heightMm, 10, 210) || !numIn(fontSize, 5, 32) || !numIn(padding, 0, 40)) {
+  const { widthMm = 45, heightMm = 35, fontSize = 12, padding = 14, rotation = 0 } = s;
+  if (!numIn(widthMm, 10, 210) || !numIn(heightMm, 10, 210) || !numIn(fontSize, 5, 32) || !numIn(padding, 0, 40) || ![0, 90, 180, 270].includes(rotation)) {
     return { error: 'Invalid sticker fields' };
   }
-  return { value: { widthMm, heightMm, fontSize, padding } };
+  return { value: { widthMm, heightMm, fontSize, padding, rotation } };
 }
 
 function validatePage(p) {
