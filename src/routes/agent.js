@@ -21,6 +21,17 @@ router.post('/api/agent/claim', auth('AGENT_API_KEY'), (req, res) => {
   res.json({ job: null });
 });
 
+// POST /api/agent/jobs/:id/start — atomically claim a queued job before printing
+router.post('/api/agent/jobs/:id/start', auth('AGENT_API_KEY'), (req, res) => {
+  if (req.body.agentId !== config.agentId) return res.status(400).json({ error: 'Invalid agent/job' });
+  const existing = jobStore.find(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Job not found' });
+  if (existing.status === 'cancelled') return res.status(409).json({ error: 'Job cancelled' });
+  if (existing.status !== 'queued') return res.status(409).json({ error: `Job is already ${existing.status}` });
+  const job = jobStore.start(req.params.id);
+  res.json({ job });
+});
+
 // POST /api/agent/jobs/:id/ack — agent reports submitted/failed
 router.post('/api/agent/jobs/:id/ack', auth('AGENT_API_KEY'), (req, res) => {
   if (req.body.agentId !== config.agentId) return res.status(400).json({ error: 'Invalid agent/job' });

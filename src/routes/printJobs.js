@@ -46,9 +46,15 @@ router.post('/api/print-jobs/:id/retry', auth('APP_API_KEY'), (req, res) => {
   res.json({ job });
 });
 
-// POST /api/print-jobs/:id/cancel — direct jobs are emitted instantly
+// POST /api/print-jobs/:id/cancel — queued jobs can be skipped by the agent
 router.post('/api/print-jobs/:id/cancel', auth('APP_API_KEY'), (req, res) => {
-  return res.status(409).json({ error: 'Cannot cancel direct job after sending' });
+  const existing = jobStore.find(req.params.id);
+  if (!existing) return res.status(404).json({ error: 'Job not found' });
+  if (existing.status !== 'queued') {
+    return res.status(409).json({ error: `Cannot cancel a ${existing.status} job` });
+  }
+  const job = jobStore.cancel(req.params.id);
+  return res.json({ job });
 });
 
 module.exports = router;

@@ -24,7 +24,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
         paper,
         copies,
         kind,
-        status: 'processing',
+        status: 'queued',
         createdAt: now,
         updatedAt: now,
       };
@@ -39,9 +39,27 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
     find(id) {
       return jobs.find((j) => j._id === id);
     },
+    start(id) {
+      const job = jobs.find((j) => j._id === id);
+      if (!job || job.status !== 'queued') return null;
+      job.status = 'processing';
+      job.startedAt = new Date().toISOString();
+      job.updatedAt = job.startedAt;
+      return job;
+    },
+    cancel(id) {
+      const job = jobs.find((j) => j._id === id);
+      if (!job || job.status !== 'queued') return null;
+      job.status = 'cancelled';
+      job.cancelledAt = new Date().toISOString();
+      job.updatedAt = job.cancelledAt;
+      delete job.html;
+      return job;
+    },
     ack(id, status, error) {
       const job = jobs.find((j) => j._id === id);
       if (!job) return null;
+      if (job.status === 'cancelled') return job;
       job.status = status;
       job.updatedAt = new Date().toISOString();
       if (status === 'submitted') {
@@ -56,7 +74,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
     retry(id) {
       const job = jobs.find((j) => j._id === id);
       if (!job || job.status !== 'failed') return null;
-      job.status = 'processing';
+      job.status = 'queued';
       job.lastError = null;
       job.updatedAt = new Date().toISOString();
       return job;
@@ -65,6 +83,7 @@ function createJobStore({ maxJobs = config.maxJobs, agentId = config.agentId } =
     applyPrintResult({ id, status, error }) {
       const job = jobs.find((j) => j._id === id);
       if (!job) return null;
+      if (job.status === 'cancelled') return job;
       if (status === 'submitted') {
         job.status = 'submitted';
         job.submittedAt = new Date().toISOString();
